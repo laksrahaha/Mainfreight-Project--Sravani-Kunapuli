@@ -13,11 +13,17 @@ namespace MainfreightProject
         //this will intialise the user object
         public User(string userID, string name, string email)
         {
+            this.userID = userID;
+            this.name = name;
+            this.email = email;
         }
 
         public string ViewProfile()
         {
-            return "";// i am using return so that when there is an object it can be viewed , nd whatver the object is inside it will be returned and viewable
-        }
+            return "User ID: " + userID +
+             "\nName" + "\nEmail: " + email ;
+            // returns the thhe user detials in one one 
     }
 }
+
+}   
