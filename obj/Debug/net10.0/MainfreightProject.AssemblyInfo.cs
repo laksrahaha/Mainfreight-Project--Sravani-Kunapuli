@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MainfreightProject")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d52f2d74488372d36718f493c90b7c141c821b3b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+44a932943a55a84e8d77edb0b6eeba2cb2474a1e")]
 [assembly: System.Reflection.AssemblyProductAttribute("MainfreightProject")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MainfreightProject")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

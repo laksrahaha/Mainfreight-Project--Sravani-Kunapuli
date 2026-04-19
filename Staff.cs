@@ -29,7 +29,19 @@ public class Staff:User
     {
         //this will the updatestauts method on the shipment object then give it the new value that they wih to update
         shipment.UpdateStatus(newStatus);
-        shipment.UpdateDeliveryStatus(newStatus);
+
+        if (newStatus == "Delivered")
+        {
+            shipment.UpdateDeliveryStatus("Delivered");
+        }
+        else if (newStatus == "Returned")
+        {
+            shipment.UpdateDeliveryStatus("Returning");
+        }
+        else
+        {
+            shipment.UpdateDeliveryStatus("Not Delivered");
+        }
 
         //this creates a new tracking update object when the status is changed by staff
         TrackingUpdate newUpdate = new TrackingUpdate(
@@ -38,8 +50,9 @@ public class Staff:User
             "Shipment status updated to: " + newStatus);
 
         //this adds the new tracking update into the shipment history list
-        shipment.AddTrackingUpdate(newUpdate);
+        shipment.addTrackingUpdate(newUpdate);
 
         Console.WriteLine("The Shipment status updated to: " +  newStatus);
     }
+
 }

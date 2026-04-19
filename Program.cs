@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace MainfreightProject;
 
@@ -7,46 +8,85 @@ class Program
 {
     static void Main(string[] args)
     {
-        //these are the sample data i am using to create and test the menu from whihc i will be operating thhis main system 
-        Customer customerMock = new Customer("User1", "Lakshmi", "lakshmi@email.com", "Custom1", "0211236567", "Auckland");
-
-        Staff staff1 = new Staff("User2", "Nainika", "staff@email.com", "Staff1", "Customer Service");
-
-        //using a list to stroe all the sample data and also having a alist means the staff user can append theri information to this list 
-        List<Shipment> shipments = new List<Shipment>
+        //these are the sample data i am using to create and test the menu from whihc i will be operating thhis main system uing lsits to store this information
+        List<Customer> customers = new List<Customer>
         {
-            new Shipment("Ship1", "In Transit", "Auckland Depot", "Out for delivery"),
-            new Shipment("Ship2", "Delivered", "Manukau Hub", "Delivered"),
-            new Shipment("Ship3", "Delayed", "Hamilton Depot", "Delayed")
+            new Customer("User1", "Lakshmi", "lakshmi@email.com", "Custom1", "0211236567", "Auckland"),
+            new Customer("User3", "Asha", "asha@email.com", "Custom2", "0224567890", "Manukau")
         };
 
+        List<Staff> staffMembers = new List<Staff>
+        {
+            new Staff("User2", "Nainika", "staff@email.com", "Staff1", "Customer Service"),
+            new Staff("User4", "Riya", "riya@email.com", "Staff2", "Operations")
+        };
+
+        //this file path is used so shipment data can be saved and loaded again next time the program runs
+        string shipmentFilePath = "shipments.txt";
+
+        //using a list to stroe all the sample data and also having a alist means the staff user can append theri information to this list 
+        List<Shipment> shipments = LoadShipmentsFromFile(shipmentFilePath);
+
+        //this is just a fallback so if there is no file yet the program still has starting data to work with
+        if (shipments.Count == 0)
+        {
+            shipments = new List<Shipment>
+            {
+                new Shipment("Ship1", "In Transit", "Auckland Depot", "Not Delivered"),
+                new Shipment("Ship2", "Delivered", "Manukau Hub", "Delivered"),
+                new Shipment("Ship3", "Delayed", "Hamilton Depot", "Not Delivered")
+            };
+
+            SaveShipmentsToFile(shipments, shipmentFilePath);
+        }
+
         //this assigns one shipment to the customer side of the demo
-        Shipment customerShipment = shipments[0];
+        Dictionary<Customer, Shipment> customerShipments = new Dictionary<Customer, Shipment>();
+
+        //this just links the demo customers to demo shipments so when a customer is chosen the menu knows which shipment belongs to them
+        if (customers.Count > 0 && shipments.Count > 0)
+        {
+            customerShipments.Add(customers[0], shipments[0]);
+        }
+
+        if (customers.Count > 1 && shipments.Count > 1)
+        {
+            customerShipments.Add(customers[1], shipments[1]);
+        }
 
         //these starter tracking updates make the system feel more real when demoing
-        shipments[0].AddTrackingUpdate(
-            new TrackingUpdate(
-                "UPD001",
-                DateTime.Now,
-                "Shipment arrived at Auckland Depot."
-            )
-        );
+        if (shipments.Count > 0)
+        {
+            shipments[0].addTrackingUpdate(
+                new TrackingUpdate(
+                    "UPD001",
+                    DateTime.Now,
+                    "Shipment arrived at Auckland Depot."
+                )
+            );
+        }
 
-        shipments[1].AddTrackingUpdate(
-            new TrackingUpdate(
-                "UPD002",
-                DateTime.Now,
-                "Shipment delivered successfully."
-            )
-        );
+        if (shipments.Count > 1)
+        {
+            shipments[1].addTrackingUpdate(
+                new TrackingUpdate(
+                    "UPD002",
+                    DateTime.Now,
+                    "Shipment delivered successfully."
+                )
+            );
+        }
 
-        shipments[2].AddTrackingUpdate(
-            new TrackingUpdate(
-                "UPD003",
-                DateTime.Now,
-                "Shipment delayed due to transport issue."
-            )
-        );
+        if (shipments.Count > 2)
+        {
+            shipments[2].addTrackingUpdate(
+                new TrackingUpdate(
+                    "UPD003",
+                    DateTime.Now,
+                    "Shipment delayed due to transport issue."
+                )
+            );
+        }
 
         //the boolean varible keeps the proram going til the user chooses to break the program
         bool running = true;
@@ -65,11 +105,31 @@ class Program
             switch (Userchoice)
             {
                 case "1":
-                    ShowCustomerMenu(customerMock, customerShipment);
+                    //this lets the system ask which customer is using the menu instead of just assuming the same one every time
+                    Customer selectedCustomer = SelectCustomer(customers);
+
+                    if (selectedCustomer != null)
+                    {
+                        if (customerShipments.ContainsKey(selectedCustomer))
+                        {
+                            ShowCustomerMenu(selectedCustomer, customerShipments[selectedCustomer]);
+                        }
+                        else
+                        {
+                            Console.WriteLine("No shipment is currently assigned to this customer.");
+                            Pause();
+                        }
+                    }
                     break;
 
                 case "2":
-                    ShowStaffMenu(staff1, shipments);
+                    //same idea here for staff so the system shows which staff member is entering instead of forcing one default person
+                    Staff selectedStaff = SelectStaff(staffMembers);
+
+                    if (selectedStaff != null)
+                    {
+                        ShowStaffMenu(selectedStaff, shipments, shipmentFilePath);
+                    }
                     break;
 
                 //allows for the user to break the program then thanks them for using it 
@@ -190,7 +250,7 @@ class Program
     }
 
     //this method groups all the staff options together in one menu whihc is nested
-    static void ShowStaffMenu(Staff staff1, List<Shipment> shipments)
+    static void ShowStaffMenu(Staff staff1, List<Shipment> shipments, string shipmentFilePath)
     {
         bool staffMenu = true;
 
@@ -215,6 +275,15 @@ class Program
                     break;
 
                 case "2":
+                //displays the shipments at the start itself so that the staff can see the id in the start itself, when they decide they want to choose view a certian cshients detials
+                    Console.WriteLine("\n--- All Shipments ---");
+
+                    foreach (Shipment shipment in shipments)
+                    {
+                        Console.WriteLine(shipment.getShipmentInfo());
+                        Console.WriteLine();
+                    }
+
                     //staff can select which shipment they want to update instead of the system assuming one shipment
                     Shipment updateShipment = PromptForShipment(shipments, "Enter shipment ID to update (or type back): ");
 
@@ -254,6 +323,10 @@ class Program
 
                     //this shows object interaction because staff updates the chosen shipment object
                     staff1.UpdateShipmentStatus(updateShipment, newStatus);
+
+                    //this saves the shipment list again after a status update so the changed data is still there next run
+                    SaveShipmentsToFile(shipments, shipmentFilePath);
+
                     Console.WriteLine(updateShipment.getShipmentInfo());
                     Pause();
                     break;
@@ -318,23 +391,25 @@ class Program
 
                     string newShipmentStatus = shipmentStatusOptions[shipmentStatusIndex - 1];
 
+                    string[] deliveryStatusOptions = { "Delivered", "Not Delivered", "Returning" };
+
                     Console.WriteLine("\nChoose the delivery status:");
-                    for (int i = 0; i < shipmentStatusOptions.Length; i++)
+                    for (int i = 0; i < deliveryStatusOptions.Length; i++)
                     {
-                        Console.WriteLine((i + 1) + ". " + shipmentStatusOptions[i]);
+                        Console.WriteLine((i + 1) + ". " + deliveryStatusOptions[i]);
                     }
 
                     string deliveryStatusChoice = ReadNonEmptyInput("Enter your choice: ");
                     int deliveryStatusIndex;
 
-                    if (!int.TryParse(deliveryStatusChoice, out deliveryStatusIndex) || deliveryStatusIndex < 1 || deliveryStatusIndex > shipmentStatusOptions.Length)
+                    if (!int.TryParse(deliveryStatusChoice, out deliveryStatusIndex) || deliveryStatusIndex < 1 || deliveryStatusIndex > deliveryStatusOptions.Length)
                     {
                         Console.WriteLine("Invalid delivery status option selected.");
                         Pause();
                         break;
                     }
 
-                    string newDeliveryStatus = shipmentStatusOptions[deliveryStatusIndex - 1];
+                    string newDeliveryStatus = deliveryStatusOptions[deliveryStatusIndex - 1];
 
                     if (!ConfirmAction("Are you sure you want to add this new shipment? (yes/no): "))
                     {
@@ -345,6 +420,9 @@ class Program
 
                     Shipment newShipment = new Shipment(newShipmentID, newShipmentStatus, newLocation, newDeliveryStatus);
                     shipments.Add(newShipment);
+
+                    //this saves the list straight after adding so new shipments are not just there for one terminal session only
+                    SaveShipmentsToFile(shipments, shipmentFilePath);
 
                     Console.WriteLine("New shipment added successfully.");
                     Pause();
@@ -364,6 +442,125 @@ class Program
                     break;
             }
         }
+    }
+
+    //this shows the customer list first so the system can use the one the user picked instead of auto using one hardcoded customer
+    static Customer SelectCustomer(List<Customer> customers)
+    {
+        while (true)
+        {
+            Console.WriteLine("\nSelect Customer by typing in the number:");
+
+            for (int i = 0; i < customers.Count; i++)
+            {
+                Console.WriteLine((i + 1) + ".");
+                Console.WriteLine(customers[i].ViewcustomerInfo());
+            }
+
+            Console.Write("Enter your choice or type back (b): ");
+            string choice = Console.ReadLine();
+
+            if (choice.Equals("back", StringComparison.OrdinalIgnoreCase) ||
+                choice.Equals("b", StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            int index;
+            if (int.TryParse(choice, out index) && index >= 1 && index <= customers.Count)
+            {
+                return customers[index - 1];
+            }
+
+            Console.WriteLine("Invalid choice. Please try again.");
+        }
+    }
+
+    //this does the same thing for staff so there is a proper chosen staff member for the menu session
+    static Staff SelectStaff(List<Staff> staffMembers)
+    {
+        while (true)
+        {
+            Console.WriteLine("\nSelect Staff Member by typing the number:");
+
+            for (int i = 0; i < staffMembers.Count; i++)
+            {
+                Console.WriteLine((i + 1) + ".");
+                Console.WriteLine(staffMembers[i].ViewStaffInfo());
+            }
+
+            Console.Write("Enter your choice or type back (b): ");
+            string choice = Console.ReadLine();
+
+            if (choice.Equals("back", StringComparison.OrdinalIgnoreCase) || 
+            choice.Equals("b", StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            int index;
+            if (int.TryParse(choice, out index) && index >= 1 && index <= staffMembers.Count)
+            {
+                return staffMembers[index - 1];
+            }
+
+            Console.WriteLine("Invalid choice. Please try again.");
+        }
+    }
+
+    //this saves only the shipment fields we need into a text file line by line so they can be rebuilt later into Shipment objects
+    static void SaveShipmentsToFile(List<Shipment> shipments, string shipmentFilePath)
+    {
+        List<string> lines = new List<string>();
+
+        foreach (Shipment shipment in shipments)
+        {
+            string shipmentInfo = shipment.getShipmentInfo();
+            string[] shipmentParts = ExtractShipmentData(shipmentInfo);
+
+            lines.Add(shipmentParts[0] + "|" + shipmentParts[1] + "|" + shipmentParts[2] + "|" + shipmentParts[3]);
+        }
+
+        File.WriteAllLines(shipmentFilePath, lines);
+    }
+
+    //this reads the saved shipment text file and turns each line back into a Shipment object when the program starts
+    static List<Shipment> LoadShipmentsFromFile(string shipmentFilePath)
+    {
+        List<Shipment> shipments = new List<Shipment>();
+
+        if (!File.Exists(shipmentFilePath))
+        {
+            return shipments;
+        }
+
+        string[] lines = File.ReadAllLines(shipmentFilePath);
+
+        foreach (string line in lines)
+        {
+            string[] parts = line.Split('|');
+
+            if (parts.Length == 4)
+            {
+                Shipment shipment = new Shipment(parts[0], parts[1], parts[2], parts[3]);
+                shipments.Add(shipment);
+            }
+        }
+
+        return shipments;
+    }
+
+    //this pulls the four shipment values back out from the getShipmentInfo string so the current Shipment class can still be reused without changing it
+    static string[] ExtractShipmentData(string shipmentInfo)
+    {
+        string[] lines = shipmentInfo.Split('\n');
+
+        string shipmentID = lines[0].Replace("Shipment ID:", "").Trim();
+        string shipmentStatus = lines[1].Replace("Shipment Status:", "").Trim();
+        string currentLocation = lines[2].Replace("Current Location:", "").Trim();
+        string deliveryStatus = lines[3].Replace("Delivery Status:", "").Trim();
+
+        return new string[] { shipmentID, shipmentStatus, currentLocation, deliveryStatus };
     }
 
     //this helper keeps asking until the user enters something meningful
@@ -407,11 +604,11 @@ class Program
 
             if (string.IsNullOrWhiteSpace(enteredID))
             {
-                Console.WriteLine("Shipment ID cannot be left blank. Please try again or type back to return.");
+                Console.WriteLine("Shipment ID cannot be left blank. Please try again or type back(b) to return.");
                 continue;
             }
 
-            if (enteredID.Equals("back", StringComparison.OrdinalIgnoreCase))
+            if (enteredID.Equals("back", StringComparison.OrdinalIgnoreCase )|| enteredID.Equals("b", StringComparison.OrdinalIgnoreCase))
             {
                 return null;
             }

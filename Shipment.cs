@@ -45,7 +45,7 @@ namespace MainfreightProject;
         }
 
 //te method adds the trackinupdate obect to the shipemt update list 
-        public void AddTrackingUpdate(TrackingUpdate updateShipment)
+        public void addTrackingUpdate(TrackingUpdate updateShipment)
         {
 
         trackingUpdate.Add(updateShipment);

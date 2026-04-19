@@ -18,12 +18,12 @@ namespace MainfreightProject;
             this.email = email;
         }
 
-        public string ViewProfile()
-        {
-            return "User ID: " + userID +
-             "\nName" + name + 
-             "\nEmail: " + email ;
-            // returns the  user detials in one go
+      public string ViewProfile()
+    {
+        return "User ID: " + userID +
+                "\nName: " + name +
+                "\nEmail: " + email + "\n";
+        // returns the  user detials in one go
     }
 }
 
